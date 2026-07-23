@@ -1,0 +1,40 @@
+name: CD - Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release Artifacts
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app || true
+
+      - name: Build Release Binary
+        run: swift build -c release
+
+      - name: Package Binary
+        run: |
+          mkdir -p release_dist
+          cp .build/release/grip release_dist/
+          cd release_dist
+          tar -czvf ../grip-macOS-arm64.tar.gz grip
+          cd ..
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: grip-macOS-arm64.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
