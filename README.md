@@ -10,17 +10,19 @@ It evaluates command execution requests against rules defined in `.agents/grip.y
 
 ### Download Pre-built Binary via `gh` CLI (Recommended)
 
-You can download the latest release binary directly using GitHub CLI:
+You can download the latest release binary directly using GitHub CLI and install it to `~/.local/bin`:
 
 ```bash
 # Download the latest binary release
 gh release download --repo xiangma9712/grip --pattern "*.tar.gz"
 
-# Extract and install to /usr/local/bin (or any directory in your PATH)
+# Extract and install to ~/.local/bin (no sudo required)
 tar -xzvf grip-macOS-arm64.tar.gz
-sudo mkdir -p /usr/local/bin
-sudo mv grip /usr/local/bin/
+mkdir -p ~/.local/bin
+mv grip ~/.local/bin/
 ```
+
+> **Note**: Make sure `~/.local/bin` is in your `PATH`. If not, add `export PATH="$HOME/.local/bin:$PATH"` to your `~/.zshrc` or `~/.bashrc`.
 
 ### Build from Source
 
@@ -30,8 +32,8 @@ Requirements: macOS 15.0+ with Xcode 16+ & Swift 6.0+
 git clone https://github.com/xiangma9712/grip.git
 cd grip
 swift build -c release
-sudo mkdir -p /usr/local/bin
-sudo cp .build/release/grip /usr/local/bin/
+mkdir -p ~/.local/bin
+cp .build/release/grip ~/.local/bin/
 ```
 
 ---
