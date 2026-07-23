@@ -1,52 +1,79 @@
 # grip 🔒
 
-**grip** は、エージェント（Antigravity CLI など）が実行するコマンドに対して高度なパーミッションコントロールを提供する Swift 製の CLI ツールです。
+**grip** is a high-performance Swift CLI tool providing advanced, agentic permission control for AI agents (such as Antigravity CLI, Claude Code, Goose, etc.) executing terminal commands.
 
-`.agents/hooks.json` 経由でフック呼び出しされ、`.agents/grip.yaml` に定義された設定に従ってコマンド実行の可否（`allow` / `ask` / `deny`）を判定します。
-
----
-
-## 🌟 主な特徴と評価ロジック
-
-### 1. ルール判定の仕組み
-- **Regex Matcher**: `regex` フィールドによるパターンマッチ
-- **Exclude Exclusion**: `exclude` フィールドによる特定の例外コマンドの除外
-- **Deterministic Decision**: ルールベースの決定 (`allow`, `ask`, `deny`)
-- **Agentic Decision**: **Apple Foundation Model** による判定 (`allow_read`, `allow_low_risk`)
-
-### 2. 優先度と決定ルール (Precedence Rules)
-1. **複数ルールにマッチする場合**:
-   - **より厳しい判定 (deny 優先)** を最優先して採用します。
-   - 厳しさの優先順位: `deny` (最優先) > `ask` > `allow`
-2. **Deterministic vs Agentic**:
-   - 決定ルール (deterministic) と AI 判断ルール (agentic) の両方にマッチする場合、**Deterministic 規則を優先**します。
-   - agentic 判断は、deterministic ルールで決定が下されない場合に発動します。
+It evaluates command execution requests against rules defined in `.agents/grip.yaml` via pre-tool execution hooks (`.agents/hooks.json`).
 
 ---
 
-## 📄 設定ファイル形式 (`.agents/grip.yaml`)
+## ⚡ Installation & Quick Start
+
+### Download Pre-built Binary via `gh` CLI (Recommended)
+
+You can download the latest release binary directly using GitHub CLI:
+
+```bash
+# Download the latest binary release
+gh release download --repo xiangma9712/grip --pattern "*.tar.gz"
+
+# Extract and install to /usr/local/bin (or any directory in your PATH)
+tar -xzvf grip-macOS-arm64.tar.gz
+sudo mv grip /usr/local/bin/
+```
+
+### Build from Source
+
+Requirements: macOS 15.0+ with Xcode 16+ & Swift 6.0+
+
+```bash
+git clone https://github.com/xiangma9712/grip.git
+cd grip
+swift build -c release
+sudo cp .build/release/grip /usr/local/bin/
+```
+
+---
+
+## 🌟 Key Features & Decision Hierarchy
+
+### 1. Multi-layered Evaluation Engine
+- **Regex Matcher**: Pattern matching via `regex` field.
+- **Exclude Filter**: Exclude specific safe sub-commands using `exclude` field.
+- **Deterministic Decisions**: Rule-based immediate decisions (`allow`, `ask`, `deny`).
+- **Agentic Decisions**: **Apple Foundation Model** AI evaluation (`allow_read`, `allow_low_risk`).
+
+### 2. Precedence & Decision Hierarchy
+1. **Deny-First Precedence (Strictness Priority)**:
+   - When multiple rules match a command, the strictest decision is always selected: `deny` > `ask` > `allow`.
+2. **Deterministic Over Agentic**:
+   - If both deterministic and agentic rules match, **deterministic rules take priority**.
+   - Agentic evaluation (Apple Foundation Models) triggers only when no deterministic rule resolves the decision.
+
+---
+
+## 📄 Configuration (`.agents/grip.yaml`)
 
 ```yaml
 default_decision: ask
 
 rules:
-  # 1. Deterministic Deny Rule
+  # 1. Deterministic Deny Rules
   - name: "Block force push to main"
     regex: "^git push (--force|-f) .* (main|master)"
     decision: deny
 
-  # 2. Exclude matching
-  - name: "Deny rm -rf except in scratch or tmp"
+  # 2. Exclude Filter
+  - name: "Deny rm -rf except scratch/tmp"
     regex: "^rm -rf"
     exclude: "^rm -rf (\\./)?(scratch|tmp|\\.build)/"
     decision: deny
 
-  # 3. Deterministic Allow Rule
+  # 3. Deterministic Allow Rules
   - name: "Allow read-only git operations"
     regex: "^git (status|log|diff|show|branch)"
     decision: allow
 
-  # 4. Agentic Decision Rules (Apple Foundation Model)
+  # 4. Agentic Decision Rules (Apple Foundation Models)
   - name: "AI Check for read-only status commands"
     regex: "^(cat|ls|pwd|echo|find|grep|rg)"
     agentic: allow_read
@@ -58,9 +85,27 @@ rules:
 
 ---
 
-## 🪝 Agent フック統合と JSON 出力規格
+## 🪝 Agent Hook Integration (`.agents/hooks.json`)
 
-フック呼び出し (`grip --json`) 時に、エージェントが判定理由や表示用メッセージを読める標準フォーマットでレスポンスを返します:
+Hook `grip` into your agent configuration (`.agents/hooks.json`):
+
+```json
+{
+  "version": "1.0",
+  "hooks": [
+    {
+      "name": "grip-permission-control",
+      "event": "pre_tool_execution",
+      "tools": ["run_command", "execute_command", "bash"],
+      "command": "grip --json"
+    }
+  ]
+}
+```
+
+### JSON Output Standard
+
+When invoked with `--json`, `grip` outputs a standard JSON payload containing human and agent readable messages:
 
 ```json
 {
@@ -74,27 +119,26 @@ rules:
 
 ---
 
-## 🚀 使い方
+## 🚀 CLI Usage & Exit Codes
 
-### ビルド & テスト
 ```bash
-swift build
-swift test
-```
-
-### CLI による手動コマンド評価
-```bash
-# 引数渡し
+# Evaluate command passed as argument
 grip "git status"
 
-# JSON 出力指定
+# Output as JSON
 grip --json "rm -rf /usr/local"
 
-# Stdin パイプ渡し (.agents/hooks.json 互換)
+# Pipe Stdin JSON (Agent hook style)
 echo '{"tool": "run_command", "command": "cat README.md"}' | grip --json
 ```
 
 ### Exit Codes
-- `0`: **ALLOW** (許可)
-- `1`: **ASK** (ユーザー確認要求)
-- `2`: **DENY** (拒否)
+- `0`: **ALLOW**
+- `1`: **ASK** (User Confirmation Prompt)
+- `2`: **DENY**
+
+---
+
+## 📜 License
+
+[CC0 1.0 Universal (Public Domain Dedication)](LICENSE)
