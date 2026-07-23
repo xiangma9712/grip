@@ -14,7 +14,7 @@ You can download the latest release binary directly using GitHub CLI and install
 
 ```bash
 # Download the latest binary release
-gh release download --repo xiangma9712/grip
+gh release download --repo xiangma9712/grip -p "*"
 
 # Extract and install to ~/.local/bin (no sudo required)
 tar -xzvf grip-macOS-arm64.tar.gz
