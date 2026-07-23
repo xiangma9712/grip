@@ -58,21 +58,17 @@ rules:
 
 ---
 
-## 🪝 Agent フック統合 (`.agents/hooks.json`)
+## 🪝 Agent フック統合と JSON 出力規格
 
-エージェントツールの実行フックとして以下のように設定します:
+フック呼び出し (`grip --json`) 時に、エージェントが判定理由や表示用メッセージを読める標準フォーマットでレスポンスを返します:
 
 ```json
 {
-  "version": "1.0",
-  "hooks": [
-    {
-      "name": "grip-permission-control",
-      "event": "pre_tool_execution",
-      "tools": ["run_command", "execute_command", "bash"],
-      "command": "grip --json"
-    }
-  ]
+  "decision" : "deny",
+  "allowed" : false,
+  "reason" : "Matched deterministic rule 'Block force push to main'",
+  "primaryRule" : "Block force push to main",
+  "message" : "🚫 Command execution blocked by grip security policy: Matched deterministic rule 'Block force push to main'"
 }
 ```
 

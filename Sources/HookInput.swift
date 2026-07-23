@@ -48,11 +48,25 @@ public struct HookOutput: Codable, Sendable {
     public let allowed: Bool
     public let reason: String
     public let primaryRule: String?
+    public let message: String
 
-    public init(decision: Decision, reason: String, primaryRule: String?) {
+    public init(decision: Decision, reason: String, primaryRule: String?, message: String? = nil) {
         self.decision = decision.rawValue
         self.allowed = (decision == .allow)
         self.reason = reason
         self.primaryRule = primaryRule
+        
+        if let customMsg = message {
+            self.message = customMsg
+        } else {
+            switch decision {
+            case .allow:
+                self.message = "✅ Command execution allowed by grip permission control."
+            case .ask:
+                self.message = "❓ Command requires user confirmation: \(reason)"
+            case .deny:
+                self.message = "🚫 Command execution blocked by grip security policy: \(reason)"
+            }
+        }
     }
 }
