@@ -18,6 +18,7 @@ gh release download --repo xiangma9712/grip --pattern "*.tar.gz"
 
 # Extract and install to /usr/local/bin (or any directory in your PATH)
 tar -xzvf grip-macOS-arm64.tar.gz
+sudo mkdir -p /usr/local/bin
 sudo mv grip /usr/local/bin/
 ```
 
@@ -29,6 +30,7 @@ Requirements: macOS 15.0+ with Xcode 16+ & Swift 6.0+
 git clone https://github.com/xiangma9712/grip.git
 cd grip
 swift build -c release
+sudo mkdir -p /usr/local/bin
 sudo cp .build/release/grip /usr/local/bin/
 ```
 
