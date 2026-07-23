@@ -1,0 +1,41 @@
+# .agents/grip.yaml - Grip Permission Control Configuration
+
+# Default decision if no rules match (allow, ask, deny)
+default_decision: ask
+
+rules:
+  # 1. Deterministic Deny Rules (Highest Priority for safety)
+  - name: 'Block destructive root operations'
+    regex: '^rm -rf /(bin|boot|dev|etc|lib|proc|sbin|sys|usr|var|Users|Home)'
+    decision: deny
+
+  - name: 'Block force push to main/master'
+    regex: '^git push (--force|-f) .* (main|master)'
+    decision: deny
+
+  # 2. Deterministic Exclude & Allow / Ask Rules
+  - name: 'Deny rm -rf except scratch or tmp'
+    regex: '^rm -rf'
+    exclude: '^rm -rf (\./)?(scratch|tmp|\.build)/'
+    decision: deny
+
+  - name: 'Allow safe git read commands'
+    regex: '^git (status|log|diff|show|branch|tag)'
+    decision: allow
+
+  - name: 'Allow build and test commands'
+    regex: '^swift (build|test)'
+    decision: allow
+
+  # 3. Agentic Evaluation Rules (Evaluated via Apple Foundation Model when no deterministic rule resolves)
+  - name: 'AI Check for read-only status commands'
+    regex: '^(cat|ls|pwd|echo|find|grep|rg|head|tail|wc)'
+    agentic: allow_read
+
+  - name: 'AI Check for low-risk project scripts'
+    regex: '^(npm|yarn|pnpm|cargo|go|python|make)'
+    agentic: allow_low_risk
+
+  - name: 'Ask for sudo privilege escalation'
+    regex: '^sudo '
+    decision: ask

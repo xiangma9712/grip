@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "hooks": [
+    {
+      "name": "grip-permission-control",
+      "event": "pre_tool_execution",
+      "tools": [
+        "run_command",
+        "execute_command",
+        "bash"
+      ],
+      "command": "grip --json"
+    }
+  ]
+}
